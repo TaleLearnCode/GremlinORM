@@ -1,0 +1,17 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>TaleLearnCode.GremlinORM</AssemblyName>
+    <Version>0.0.0-Alpha</Version>
+    <Authors>TaleLearnCode</Authors>
+    <Description>ORM (Object-Relational Mapping) for .NET projects using a Gremlin database repository.</Description>
+    <Copyright>Copyright ©2020 by Green Events &amp; Technology LLC. All rights reserved.</Copyright>
+    <NeutralLanguage>en-US</NeutralLanguage>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <PackageReference Include="Gremlin.Net" Version="3.4.7" />
+  </ItemGroup>
+
+</Project>
