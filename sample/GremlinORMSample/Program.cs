@@ -11,20 +11,23 @@ using System.Threading.Tasks;
 namespace GremlinORMSample
 {
 
+	// TODO: Add filter for SchemaDefinition
+
+
 	class Program
 	{
 
-		static async Task Main(string[] args)
+		static async Task Main()
 		{
-			await PrintOutQueryAsync();
+			await DeserializeQueryAsync();
 		}
 
 		private static async Task PrintOutQueryAsync()
 		{
 			var graphFacade = new GraphFacade(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph);
 
-			//string query = "g.V().hasLabel('room').has('eventId', 10)";
-			string query = "g.V().hasLabel('room').has('eventId', 'schemaDefinition')";
+			string query = "g.V().hasLabel('room').has('eventId', 10)";
+			//string query = "g.V().hasLabel('room').has('eventId', 'schemaDefinition')";
 			var results = await graphFacade.QueryAsync(query);
 
 			if (results.Any())
@@ -69,6 +72,88 @@ namespace GremlinORMSample
 				}
 			}
 		}
+
+		private static async Task DeserializeQueryAsync()
+		{
+
+			List<QueryResult> queryResults = new List<QueryResult>();
+
+			var graphFacade = new GraphFacade(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph);
+
+			string query = "g.V().hasLabel('room').has('eventId', 10)";
+			var results = await graphFacade.QueryAsync(query);
+
+			if (results.Any())
+			{
+				foreach (dynamic result in results)
+				{
+
+					QueryResult queryResult = new QueryResult();
+
+					foreach (dynamic r in result)
+					{
+						if (r.Key == "properties")
+						{
+							foreach (dynamic v in r.Value)
+							{
+
+								JsonSerializerOptions options = new JsonSerializerOptions
+								{
+									Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
+								};
+
+								string[] x = SplitCsv3(JsonSerializer.Serialize(v.Value, options));
+								if (x.Length > 0)
+									for (int i = 1; i < x.Length; i++)
+									{
+										if (i % 2 != 0)
+										{
+
+											//string propertyValue = (x[i].EndsWith("}]")) ? x[i].Substring(6, x[i].Length - 8) : x[i].Substring(6, x[i].Length - 7);
+											string propertyValue = (x[i].EndsWith("}]")) ? x[i][6..^2] : x[i][6..^1];
+
+											queryResult.Properties.Add(v.Key, new List<string> { propertyValue });
+
+										}
+									}
+
+							}
+						}
+						else if (r.Key == "id")
+						{
+							queryResult.Id = r.Value;
+						}
+						else if (r.Key == "type")
+						{
+							switch (r.Value)
+							{
+								case "vertex":
+									queryResult.GremlinType = GremlinType.Vertex;
+									break;
+								case "edge":
+									queryResult.GremlinType = GremlinType.Edge;
+									break;
+							}
+						}
+						else if (r.Key == "label")
+						{
+							queryResult.Label = r.Value;
+						}
+					}
+
+					queryResults.Add(queryResult);
+				}
+			}
+
+			if (queryResults.Any())
+			{
+				foreach (var queryResult in queryResults)
+				{
+					Console.WriteLine($"{queryResult.GremlinType}\t{queryResult.Label}\t{queryResult.Id}\t{queryResult.Properties.Count}");
+				}
+			}
+		}
+
 
 		private static void PrintKeyValue(string key, string value)
 		{
