@@ -8,6 +8,7 @@
     <Description>ORM (Object-Relational Mapping) for .NET projects using a Gremlin database repository.</Description>
     <Copyright>Copyright ©2020 by Green Events &amp; Technology LLC. All rights reserved.</Copyright>
     <NeutralLanguage>en-US</NeutralLanguage>
+    <RootNamespace>TaleLearnCode.GremlinORM</RootNamespace>
   </PropertyGroup>
 
   <ItemGroup>

@@ -42,6 +42,12 @@ namespace GremlinORM
 		/// </value>
 		public string GraphName { get; }
 
+		/// <summary>
+		/// Gets the <see cref="GremlinClient"/> being used in the background for the Gremlin operations.
+		/// </summary>
+		/// <value>
+		/// A <see cref="GremlinClient"/> reference which is being used for Gremlin database operations.
+		/// </value>
 		public GremlinClient GremlinClient { get; }
 
 		/// <summary>

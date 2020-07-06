@@ -16,24 +16,29 @@ namespace GremlinORMSample
 
 		static async Task Main(string[] args)
 		{
+			await PrintOutQueryAsync();
+		}
+
+		private static async Task PrintOutQueryAsync()
+		{
 			var graphFacade = new GraphFacade(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph);
 
-			string query = "g.V().hasLabel('room').has('eventId', 10)";
-			//string query = "g.V().hasLabel('room').has('eventId', 'schemaDefinition')";
+			//string query = "g.V().hasLabel('room').has('eventId', 10)";
+			string query = "g.V().hasLabel('room').has('eventId', 'schemaDefinition')";
 			var results = await graphFacade.QueryAsync(query);
 
 			if (results.Any())
 			{
-				foreach (var result in results)
+				foreach (dynamic result in results)
 				{
-					foreach (var r in result)
+					foreach (dynamic r in result)
 					{
 						if (r.Key == "properties")
 						{
-							foreach (var v in r.Value)
+							foreach (dynamic v in r.Value)
 							{
 
-								var options = new JsonSerializerOptions
+								JsonSerializerOptions options = new JsonSerializerOptions
 								{
 									Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
 								};
@@ -63,7 +68,6 @@ namespace GremlinORMSample
 					Console.WriteLine();
 				}
 			}
-
 		}
 
 		private static void PrintKeyValue(string key, string value)
