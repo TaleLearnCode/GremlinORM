@@ -1,7 +1,6 @@
-﻿using TaleLearnCode.GremlinORM;
-using TaleLearnCode.GremlinORM.Attributes;
+﻿using TaleLearnCode.GremlinORM.Attributes;
 
-namespace GremlinORMSample.Entities
+namespace TaleLearnCode.GremlinORM.Model
 {
 
 	/// <summary>
@@ -13,16 +12,16 @@ namespace GremlinORMSample.Entities
 	{
 
 		[GraphProperty("sessionizeId")]
-		public string sessionizeId { get; set; }
+		public string SessionizeId { get; set; }
 
 		[GraphProperty("eventId")]
-		public string eventId { get; set; }
+		public string EventId { get; set; }
 
 		[GraphProperty("name")]
-		public string name { get; set; }
+		public string Name { get; set; }
 
 		[GraphProperty("sortOrder")]
-		public int sortOrder { get; set; }
+		public int SortOrder { get; set; }
 
 		public Room() : base("room") { }
 

@@ -7,6 +7,10 @@ namespace TaleLearnCode.GremlinORM
 	public class GraphContext
 	{
 
+
+
+
+
 		private Dictionary<string, Type> ModelVertices { get; } = new Dictionary<string, Type>();
 
 		/// <summary>
