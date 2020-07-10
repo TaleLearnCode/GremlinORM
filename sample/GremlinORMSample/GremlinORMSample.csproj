@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <ProjectReference Include="..\..\src\GremlinORM.Cosmos\GremlinORM.Cosmos.csproj" />
     <ProjectReference Include="..\..\src\GremlinORM\GremlinORM.csproj" />
   </ItemGroup>
 

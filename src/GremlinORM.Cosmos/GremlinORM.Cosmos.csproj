@@ -1,0 +1,19 @@
+<Project Sdk="Microsoft.NET.Sdk">
+
+  <PropertyGroup>
+    <TargetFramework>netstandard2.0</TargetFramework>
+    <AssemblyName>TaleLearnCode.GremlinORM.Cosmos</AssemblyName>
+    <RootNamespace>TaleLearnCode.GremlinORM.Cosmos</RootNamespace>
+    <PackageId>TaleLearnCode.GremlinORM.Cosmos</PackageId>
+    <Version>0.0.0-Alpha</Version>
+    <Authors>Green Events &amp; Technology LLC</Authors>
+    <Description>ORM (Object-Relational Mapping) for .NET projects using a Gremlin database repository tailored for Cosmos DB Gremlin databases</Description>
+    <NeutralLanguage>en-US</NeutralLanguage>
+    <Copyright>Copyright ©2020 by Green Events &amp; Technology LLC. All rights reserved.</Copyright>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <ProjectReference Include="..\GremlinORM\GremlinORM.csproj" />
+  </ItemGroup>
+
+</Project>

@@ -1,8 +1,9 @@
 ﻿using Gremlin.Net.Driver;
 using Gremlin.Net.Structure.IO.GraphSON;
 using System.Threading.Tasks;
+using TaleLearnCode.GremlinORM;
 
-namespace GremlinORM
+namespace TaleLearnCode.GremlinORM
 {
 	/// <summary>
 	/// Provides access to graph related information.
@@ -72,9 +73,9 @@ namespace GremlinORM
 		/// </summary>
 		/// <param name="gremlinQuery">The gremlin query to be executed.</param>
 		/// <returns>A <see cref="ResultSet{dynamic}"/> containing the results of the query.</returns>
-		public async Task<ResultSet<dynamic>> QueryAsync(string gremlinQuery)
+		public async Task<TraversalResultset> QueryAsync(string gremlinQuery)
 		{
-			return await GremlinClient.SubmitAsync<dynamic>(gremlinQuery).ConfigureAwait(true);
+			return new TraversalResultset(await GremlinClient.SubmitAsync<dynamic>(gremlinQuery).ConfigureAwait(true));
 		}
 
 	}
