@@ -1,5 +1,6 @@
 ﻿using GremlinORMSample.Model;
 using System;
+using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using TaleLearnCode.GremlinORM;
 
@@ -14,12 +15,22 @@ namespace GremlinORMSample
 
 		static async Task Main()
 		{
-			await PerformQueryCosmos();
+			//await PerformQueryCosmos();
 
 
-			var room = new Room() { Id = "corina" };
-			var x = new GraphContext2();
-			x.Add(room);
+			//var room = new Room() { Id = "corina" };
+			//var x = new GraphContext();
+			//x.Add(room);
+
+			MyContext myContext = new MyContext();
+			Room room = new Room() { Name = "Corina" };
+			myContext.Rooms.Add(room);
+
+			Console.WriteLine("Done");
+			Console.ReadLine();
+
+
+
 		}
 
 		private static async Task PerformQuery()
@@ -74,6 +85,25 @@ namespace GremlinORMSample
 
 		}
 
+
+	}
+
+	public class MyContext : GraphContext
+	{
+		public MyContext() : base(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph) { }
+
+		public GraphSet<Room> Rooms { get; set; } = new GraphSet<Room>("room");
+
+	}
+
+	public class TestMe
+	{
+		MyContext _context = new MyContext();
+
+		public void TestMy()
+		{
+			Console.WriteLine(_context.Rooms.GetType());
+		}
 
 	}
 

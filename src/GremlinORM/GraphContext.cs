@@ -1,7 +1,7 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.Reflection;
 using System.Threading.Tasks;
+using TaleLearnCode.GremlinORM.Interfaces;
 
 namespace TaleLearnCode.GremlinORM
 {
@@ -9,7 +9,15 @@ namespace TaleLearnCode.GremlinORM
 	public class GraphContext
 	{
 
-		private Dictionary<string, Type> _trackedVertexTypes = new Dictionary<string, Type>();
+		/// <summary>
+		/// Gets the tracked vertex types.
+		/// </summary>
+		/// <value>
+		/// The tracked vertex types.
+		/// Key = label; Value = Property Name
+		/// </value>
+		private Dictionary<string, string> TrackedVertexTypes { get; } = new Dictionary<string, string>();
+
 
 		/// <summary>
 		/// Gets the a facade of the connection to the Gremlin graph.
@@ -28,13 +36,22 @@ namespace TaleLearnCode.GremlinORM
 		/// <param name="graphName">Name of the graph.</param>
 		public GraphContext(string endpoint, string authKey, string databaseName, string graphName)
 		{
-			GraphFacade = new GraphFacade(endpoint, authKey, databaseName, graphName);
+			//GraphFacade = new GraphFacade(endpoint, authKey, databaseName, graphName);
+
+			foreach (PropertyInfo propertyInfo in this.GetType().GetProperties())
+			{
+				if (typeof(IGraphSet).IsAssignableFrom(propertyInfo.PropertyType))
+				{
+					TrackedVertexTypes.Add(((IGraphSet)propertyInfo.GetValue(this)).Label, propertyInfo.Name);
+
+				}
+
+			}
+
+
 		}
 
-		public void TrackVertexType(Type type, string label)
-		{
-			_trackedVertexTypes[label] = type;
-		}
+
 
 		//public async Task<List<TVertex>> ExecuteQueryAsync(string gremlinQuery, GraphFacade graphFacade)
 		//{
@@ -58,10 +75,12 @@ namespace TaleLearnCode.GremlinORM
 			foreach (QueryResult queryResult in traversalResultset.Results)
 			{
 
-				Type vertexType = _trackedVertexTypes[queryResult.Label];
+				//				Type vertexType = _trackedVertexTypes[queryResult.Label];
 
 
 				PropertyInfo myPropInfo = this.GetType().GetProperty("corina");
+
+
 
 
 
@@ -73,11 +92,6 @@ namespace TaleLearnCode.GremlinORM
 					}
 
 
-
-
-
-
-
 				}
 			}
 
@@ -85,6 +99,12 @@ namespace TaleLearnCode.GremlinORM
 
 
 			return returnValue;
+		}
+
+		public async Task ExecuteQueryAsync(string gremlinQuery)
+		{
+			TraversalResultset traversalResultset = await GraphFacade.QueryAsync(gremlinQuery).ConfigureAwait(true);
+
 		}
 
 

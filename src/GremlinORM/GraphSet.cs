@@ -7,7 +7,7 @@ using TaleLearnCode.GremlinORM.Interfaces;
 namespace TaleLearnCode.GremlinORM
 {
 
-	public abstract class GraphSet<TVertex> : IGraphSet
+	public class GraphSet<TVertex> : IGraphSet
 		where TVertex : class
 	{
 
@@ -99,6 +99,11 @@ namespace TaleLearnCode.GremlinORM
 				return VertexState.Detached;
 		}
 
+		public Type GetVertexType()
+		{
+			return typeof(TVertex);
+		}
+
 		internal void AddFromQuery(TVertex vertex, VertexState vertexState)
 		{
 			string vertexId = GetVertexId(vertex);
@@ -112,6 +117,8 @@ namespace TaleLearnCode.GremlinORM
 				_changeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, vertexState));
 			}
 		}
+
+
 
 		/// <summary>
 		/// Gets the identifier of the passed in <paramref name="vertex"/>.
@@ -140,6 +147,11 @@ namespace TaleLearnCode.GremlinORM
 			return ((Vertex)((object)(vertex))).Id; ;
 		}
 
+
+		void IGraphSet.AddFromQuery(object vertex, VertexState vertexState)
+		{
+			AddFromQuery((TVertex)vertex, vertexState);
+		}
 	}
 
 }
