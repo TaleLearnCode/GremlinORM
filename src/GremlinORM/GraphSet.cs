@@ -2,19 +2,24 @@
 using System.Collections.Generic;
 using System.Threading.Tasks;
 using TaleLearnCode.GremlinORM.Exceptions;
+using TaleLearnCode.GremlinORM.Interfaces;
 
 namespace TaleLearnCode.GremlinORM
 {
 
-	public abstract class GraphSet<TVertex> where TVertex : class
+	public abstract class GraphSet<TVertex> : IGraphSet
+		where TVertex : class
 	{
 
 		Dictionary<string, TrackedVertex<TVertex>> _changeTracker = new Dictionary<string, TrackedVertex<TVertex>>();
 
-		public GraphSet()
+		public string Label { get; }
+
+		public GraphSet(string label)
 		{
 			if (!typeof(TVertex).IsSubclassOf(typeof(Vertex)))
 				throw new Exception(ResourceStrings.TrackedVertexMustInheritFromVertex(typeof(TVertex)));
+			Label = label;
 		}
 
 		/// <summary>
@@ -92,6 +97,20 @@ namespace TaleLearnCode.GremlinORM
 				return _changeTracker[vertexId].State;
 			else
 				return VertexState.Detached;
+		}
+
+		internal void AddFromQuery(TVertex vertex, VertexState vertexState)
+		{
+			string vertexId = GetVertexId(vertex);
+			if (_changeTracker.ContainsKey(vertexId))
+			{
+				_changeTracker[vertexId].Vertex = vertex;
+				_changeTracker[vertexId].State = vertexState;
+			}
+			else
+			{
+				_changeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, vertexState));
+			}
 		}
 
 		/// <summary>

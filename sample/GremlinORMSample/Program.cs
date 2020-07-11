@@ -1,4 +1,5 @@
-﻿using System;
+﻿using GremlinORMSample.Model;
+using System;
 using System.Threading.Tasks;
 using TaleLearnCode.GremlinORM;
 
@@ -14,6 +15,11 @@ namespace GremlinORMSample
 		static async Task Main()
 		{
 			await PerformQueryCosmos();
+
+
+			var room = new Room() { Id = "corina" };
+			var x = new GraphContext2();
+			x.Add(room);
 		}
 
 		private static async Task PerformQuery()

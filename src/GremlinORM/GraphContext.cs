@@ -1,5 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Reflection;
+using System.Threading.Tasks;
 
 namespace TaleLearnCode.GremlinORM
 {
@@ -7,11 +9,7 @@ namespace TaleLearnCode.GremlinORM
 	public class GraphContext
 	{
 
-
-
-
-
-		private Dictionary<string, Type> ModelVertices { get; } = new Dictionary<string, Type>();
+		private Dictionary<string, Type> _trackedVertexTypes = new Dictionary<string, Type>();
 
 		/// <summary>
 		/// Gets the a facade of the connection to the Gremlin graph.
@@ -33,25 +31,60 @@ namespace TaleLearnCode.GremlinORM
 			GraphFacade = new GraphFacade(endpoint, authKey, databaseName, graphName);
 		}
 
-		/// <summary>
-		/// Adds the specified vertex to the graph model maintained by the context.
-		/// </summary>
-		/// <param name="type">The type of the vertex.</param>
-		/// <param name="label">The label of the vertex.</param>
-		public void AddVertexToModel(Type type, string label)
+		public void TrackVertexType(Type type, string label)
 		{
-			if (!ModelVertices.ContainsKey(label))
-				ModelVertices.Add(label, type);
+			_trackedVertexTypes[label] = type;
 		}
 
-		/// <summary>
-		/// Removes the specified vertex from the graph model maintained by the context.
-		/// </summary>
-		/// <param name="label">The label of the vertex to be removed.</param>
-		public void RemoveVertexFromModel(string label)
+		//public async Task<List<TVertex>> ExecuteQueryAsync(string gremlinQuery, GraphFacade graphFacade)
+		//{
+
+		//	if (graphFacade is null) throw new ArgumentNullException(nameof(graphFacade));
+
+		//	List<TVertex> reutrnValue = new List<TVertex>();
+
+		//	TraversalResultset queryResultset = await graphFacade.QueryAsync(gremlinQuery).ConfigureAwait(true);
+
+
+		//	return reutrnValue;
+		//}
+
+
+		public async Task<List<TVertex>> ExecuteQueryAsync<TVertex>(string gremlinQuery)
 		{
-			if (ModelVertices.ContainsKey(label))
-				ModelVertices.Remove(label);
+			List<TVertex> returnValue = new List<TVertex>();
+			TraversalResultset traversalResultset = await GraphFacade.QueryAsync(gremlinQuery).ConfigureAwait(true);
+
+			foreach (QueryResult queryResult in traversalResultset.Results)
+			{
+
+				Type vertexType = _trackedVertexTypes[queryResult.Label];
+
+
+				PropertyInfo myPropInfo = this.GetType().GetProperty("corina");
+
+
+
+				foreach (PropertyInfo propertyInfo in this.GetType().GetProperties())
+				{
+					if (propertyInfo.PropertyType == typeof(QueryResult))
+					{
+
+					}
+
+
+
+
+
+
+
+				}
+			}
+
+
+
+
+			return returnValue;
 		}
 
 
