@@ -1,6 +1,11 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
+using System.Globalization;
+using System.Linq;
+using System.Reflection;
 using System.Threading.Tasks;
+using TaleLearnCode.GremlinORM.Attributes;
 using TaleLearnCode.GremlinORM.Exceptions;
 using TaleLearnCode.GremlinORM.Interfaces;
 
@@ -8,18 +13,48 @@ namespace TaleLearnCode.GremlinORM
 {
 
 	public class GraphSet<TVertex> : IGraphSet
-		where TVertex : class
+		where TVertex : class, new()
 	{
 
-		Dictionary<string, TrackedVertex<TVertex>> _changeTracker = new Dictionary<string, TrackedVertex<TVertex>>();
+
+
+
+		private Dictionary<string, TrackedVertex<TVertex>> ChangeTracker { get; } = new Dictionary<string, TrackedVertex<TVertex>>();
+
+		/// <summary>
+		/// Gets the vertex properties.
+		/// </summary>
+		/// <value>
+		/// The vertex properties.
+		/// </value>
+		/// <remarks>Key = Label; Value = Property Name</remarks>
+		private Dictionary<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)> VertexProperties { get; } = new Dictionary<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)>();
 
 		public string Label { get; }
 
-		public GraphSet(string label)
+		public VertexAttribute VertexAttribute { get; }
+
+		public GraphSet()
 		{
+
 			if (!typeof(TVertex).IsSubclassOf(typeof(Vertex)))
 				throw new Exception(ResourceStrings.TrackedVertexMustInheritFromVertex(typeof(TVertex)));
-			Label = label;
+
+			Attribute rawVertexAttribute = typeof(TVertex).GetCustomAttribute(typeof(VertexAttribute));
+			if (rawVertexAttribute is null) throw new Exception();
+			else VertexAttribute = (VertexAttribute)rawVertexAttribute;
+
+			foreach (PropertyInfo propertyInfo in typeof(TVertex).GetProperties())
+			{
+				GraphPropertyAttribute graphPropertyAttribute;
+				Attribute rawGraphPropertyAttribute = propertyInfo.GetCustomAttribute(typeof(GraphPropertyAttribute), true);
+				if (rawGraphPropertyAttribute != null)
+				{
+					graphPropertyAttribute = (GraphPropertyAttribute)rawGraphPropertyAttribute;
+					VertexProperties.Add(graphPropertyAttribute.Key, (propertyInfo.Name, propertyInfo.PropertyType.IsInstanceOfType(typeof(IList)), graphPropertyAttribute));
+				}
+			}
+
 		}
 
 		/// <summary>
@@ -32,27 +67,28 @@ namespace TaleLearnCode.GremlinORM
 		{
 			if (vertex is null) throw new ArgumentNullException(nameof(vertex));
 			string vertexId = GetVertexId(ref vertex);
-			if (_changeTracker.ContainsKey(vertexId))
+			if (ChangeTracker.ContainsKey(vertexId))
 				throw new VertexAlreadyInChangeTrackerException();
 			else
-				_changeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, VertexState.Added));
+				ChangeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, VertexState.Added));
 		}
 
 		public void Update(TVertex vertex)
 		{
+
 			if (vertex is null) throw new ArgumentNullException(nameof(vertex));
+
 			string vertexId = GetVertexId(vertex);
-			if (!string.IsNullOrWhiteSpace(vertexId))
-				if (_changeTracker.ContainsKey(vertexId))
-				{
-					_changeTracker[vertexId].Vertex = vertex;
-					_changeTracker[vertexId].State = VertexState.Modified;
-				}
-				else
-				{
-					TVertex originalVertex = vertex; // TODO: Set this to the quired valued
-					_changeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, originalVertex));
-				}
+			if (string.IsNullOrWhiteSpace(vertexId)) throw new VertexMustHaveIdentifierException();
+
+			if (ChangeTracker.ContainsKey(vertexId)) throw new VertexNotInChangeTrackerException();
+
+			if (VertexHasChanged(ChangeTracker[vertexId].Vertex, vertex))
+			{
+				ChangeTracker[vertexId].Vertex = vertex;
+				ChangeTracker[vertexId].State = VertexState.Modified;
+			}
+
 		}
 
 		public async Task<List<TVertex>> ExecuteQueryAsync(string gremlinQuery, GraphFacade graphFacade)
@@ -79,10 +115,10 @@ namespace TaleLearnCode.GremlinORM
 			if (vertex is null) throw new ArgumentNullException(nameof(vertex));
 			string vertexId = GetVertexId(vertex);
 			if (!string.IsNullOrWhiteSpace(vertexId))
-				if (_changeTracker.ContainsKey(vertexId))
-					_changeTracker[vertexId].State = VertexState.Deleted;
+				if (ChangeTracker.ContainsKey(vertexId))
+					ChangeTracker[vertexId].State = VertexState.Deleted;
 				else
-					_changeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, VertexState.Deleted));
+					ChangeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, VertexState.Deleted));
 		}
 
 		/// <summary>
@@ -93,8 +129,8 @@ namespace TaleLearnCode.GremlinORM
 		public VertexState GetVertexState(TVertex vertex)
 		{
 			string vertexId = GetVertexId(vertex);
-			if (!string.IsNullOrWhiteSpace(vertexId) && _changeTracker.ContainsKey(vertexId))
-				return _changeTracker[vertexId].State;
+			if (!string.IsNullOrWhiteSpace(vertexId) && ChangeTracker.ContainsKey(vertexId))
+				return ChangeTracker[vertexId].State;
 			else
 				return VertexState.Detached;
 		}
@@ -103,22 +139,6 @@ namespace TaleLearnCode.GremlinORM
 		{
 			return typeof(TVertex);
 		}
-
-		internal void AddFromQuery(TVertex vertex, VertexState vertexState)
-		{
-			string vertexId = GetVertexId(vertex);
-			if (_changeTracker.ContainsKey(vertexId))
-			{
-				_changeTracker[vertexId].Vertex = vertex;
-				_changeTracker[vertexId].State = vertexState;
-			}
-			else
-			{
-				_changeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, vertexState));
-			}
-		}
-
-
 
 		/// <summary>
 		/// Gets the identifier of the passed in <paramref name="vertex"/>.
@@ -147,11 +167,118 @@ namespace TaleLearnCode.GremlinORM
 			return ((Vertex)((object)(vertex))).Id; ;
 		}
 
-
-		void IGraphSet.AddFromQuery(object vertex, VertexState vertexState)
+		object IGraphSet.AddFromQuery(QueryResult queryResult)
 		{
-			AddFromQuery((TVertex)vertex, vertexState);
+			if (queryResult.GremlinObjectType == GremlinObjectType.Vertex)
+			{
+				TVertex vertex = new TVertex();
+
+				SetPropertyValue(ref vertex, "Id", queryResult.Id);
+				SetPropertyValue(ref vertex, "Label", queryResult.Label);
+
+				foreach (KeyValuePair<string, List<string>> property in queryResult.Properties)
+				{
+					PropertyInfo propertyInfo = typeof(TVertex).GetProperty(VertexProperties[property.Key].PropertyName);
+
+
+
+
+					//var propertyValue = Activator.CreateInstance(propertyInfo.PropertyType);
+					//if (VertexProperties[property.Key].IsList)
+					//	foreach (string returnedValue in property.Value)
+					//		((IList)propertyValue).Add(CastPropertyValue(propertyInfo, returnedValue));
+					//else
+					//	propertyValue = CastPropertyValue(propertyInfo, property.Value[0]);
+					//propertyInfo.SetValue(vertex, propertyValue);
+
+
+					if (VertexProperties[property.Key].IsList)
+						propertyInfo.SetValue(vertex, CastPropertyValuesToList(propertyInfo, property.Value));
+					else
+						propertyInfo.SetValue(vertex, CastPropertyValue(propertyInfo, property.Value[0]));
+
+
+
+				}
+				ChangeTracker[queryResult.Id] = new TrackedVertex<TVertex>(vertex, VertexState.Unchanged);
+
+				return vertex;
+			}
+
+			return default;
 		}
+
+		private static bool VertexHasChanged(TVertex originalVertex, TVertex newVertex)
+		{
+			foreach (PropertyInfo propertyInfo in originalVertex.GetType().GetProperties())
+			{
+				if (propertyInfo.GetValue(originalVertex) != propertyInfo.GetValue(newVertex))
+					return true;
+			}
+			return false;
+		}
+
+		private static object CastPropertyValue(PropertyInfo destinationPropertyInfo, string propertyValue)
+		{
+			if (destinationPropertyInfo.PropertyType == typeof(bool))
+				return bool.Parse(propertyValue);
+			else if (destinationPropertyInfo.PropertyType == typeof(byte))
+				return byte.Parse(propertyValue, CultureInfo.InvariantCulture);
+			else if (destinationPropertyInfo.PropertyType == typeof(double))
+				return double.Parse(propertyValue, CultureInfo.InvariantCulture);
+			else if (destinationPropertyInfo.PropertyType == typeof(float))
+				return float.Parse(propertyValue, CultureInfo.InvariantCulture);
+			else if (destinationPropertyInfo.PropertyType == typeof(int))
+				return int.Parse(propertyValue, CultureInfo.InvariantCulture);
+			else if (destinationPropertyInfo.PropertyType == typeof(long))
+				return long.Parse(propertyValue, CultureInfo.InvariantCulture);
+			else if (destinationPropertyInfo.PropertyType == typeof(DateTime))
+				return DateTime.Parse(propertyValue, CultureInfo.InvariantCulture);
+			else
+				return propertyValue;
+		}
+
+		private static List<object> CastPropertyValuesToList(PropertyInfo destinationPropertyInfo, List<string> propertyValues)
+		{
+
+			Type destinationListType = destinationPropertyInfo.PropertyType.GetType().GetGenericArguments().Single();
+
+			List<object> returnValue = new List<object>();
+			if (destinationListType == typeof(bool))
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(bool.Parse(propertyValue));
+			else if (destinationListType == typeof(byte))
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(byte.Parse(propertyValue, CultureInfo.InvariantCulture));
+			else if (destinationListType == typeof(double))
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(double.Parse(propertyValue, CultureInfo.InvariantCulture));
+			else if (destinationListType == typeof(float))
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(float.Parse(propertyValue, CultureInfo.InvariantCulture));
+			else if (destinationListType == typeof(int))
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(int.Parse(propertyValue, CultureInfo.InvariantCulture));
+			else if (destinationListType == typeof(long))
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(long.Parse(propertyValue, CultureInfo.InvariantCulture));
+			else if (destinationListType == typeof(DateTime))
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(DateTime.Parse(propertyValue, CultureInfo.InvariantCulture));
+			else
+				foreach (string propertyValue in propertyValues)
+					returnValue.Add(propertyValue);
+
+			return returnValue;
+
+		}
+
+		private static void SetPropertyValue(ref TVertex vertex, string propertyName, string propertyValue)
+		{
+			PropertyInfo propertyInfo = typeof(TVertex).GetProperty(propertyName);
+			propertyInfo.SetValue(vertex, CastPropertyValue(propertyInfo, propertyValue));
+		}
+
 	}
 
 }

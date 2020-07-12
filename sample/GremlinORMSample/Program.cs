@@ -1,5 +1,6 @@
 ﻿using GremlinORMSample.Model;
 using System;
+using System.Collections.Generic;
 using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using TaleLearnCode.GremlinORM;
@@ -15,56 +16,61 @@ namespace GremlinORMSample
 
 		static async Task Main()
 		{
-			//await PerformQueryCosmos();
+
+			//string query = "g.V().hasLabel('room').has('eventId', 10)";
+			string query = "g.V().has('eventId', 10)";
 
 
-			//var room = new Room() { Id = "corina" };
-			//var x = new GraphContext();
-			//x.Add(room);
-
-			MyContext myContext = new MyContext();
-			Room room = new Room() { Name = "Corina" };
-			myContext.Rooms.Add(room);
-
-			Console.WriteLine("Done");
-			Console.ReadLine();
+			//await PerformQueryCosmos(query);
 
 
+			//MyContext myContext = new MyContext();
+			//Dictionary<Type, List<object>> queryResults = await myContext.ExecuteQueryAsync(query);
+			//Console.WriteLine(queryResults[typeof(Room)].Count);
 
-		}
+			//Console.WriteLine("Done");
+			//Console.ReadLine();
 
-		private static async Task PerformQuery()
-		{
-
-			var graphFacade = new GraphFacade(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph);
-
-			string query = "g.V().hasLabel('room').has('eventId', 10)";
-			TraversalResultset queryResultset = await graphFacade.QueryAsync(query);
+			await PerformContextQuery(query);
 
 
-			//Console.WriteLine($"Status Code: {queryResultset.StatusCode}");
-			//Console.WriteLine($"Request Charge: {queryResultset.RequestCharge}");
-			//Console.WriteLine($"Server Time: {queryResultset.ServerTime}");
-			Console.WriteLine();
-
-			if (queryResultset.Count > 0)
-			{
-				foreach (var queryResult in queryResultset.Results)
-				{
-					Console.WriteLine($"{queryResult.GremlinObjectType}\t{queryResult.Label}\t{queryResult.Id}\t{queryResult.Properties.Count}");
-				}
-			}
-
-			Console.WriteLine("Done");
 
 		}
 
-		private static async Task PerformQueryCosmos()
+		//private static async Task PerformQuery()
+		//{
+
+		//	var graphFacade = new GraphFacade(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph);
+
+		//	//string query = "g.V().hasLabel('room').has('eventId', 10)";
+		//	string query = "g.V().has('eventId', 10)";
+		//	TraversalResultset queryResultset = await graphFacade.QueryAsync(query);
+
+
+		//	//Console.WriteLine($"Status Code: {queryResultset.StatusCode}");
+		//	//Console.WriteLine($"Request Charge: {queryResultset.RequestCharge}");
+		//	//Console.WriteLine($"Server Time: {queryResultset.ServerTime}");
+		//	Console.WriteLine();
+
+		//	if (queryResultset.Count > 0)
+		//	{
+		//		foreach (var queryResult in queryResultset.Results)
+		//		{
+		//			Console.WriteLine($"{queryResult.GremlinObjectType}\t{queryResult.Label}\t{queryResult.Id}\t{queryResult.Properties.Count}");
+		//		}
+		//	}
+
+		//	Console.WriteLine("Done");
+
+		//}
+
+		private static async Task PerformQueryCosmos(string query)
 		{
 
 			var graphFacade = new TaleLearnCode.GremlinORM.Cosmos.GraphFacade(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph);
 
-			string query = "g.V().hasLabel('room').has('eventId', 10)";
+			//string query = "g.V().hasLabel('room').has('eventId', 10)";
+			//string query = "g.V().has('eventId', 10)";
 			TaleLearnCode.GremlinORM.Cosmos.TraversalResultset queryResultset = await graphFacade.QueryAsync(query);
 
 
@@ -85,6 +91,16 @@ namespace GremlinORMSample
 
 		}
 
+		private static async Task PerformContextQuery(string query)
+		{
+			MyContext myContext = new MyContext();
+			Dictionary<Type, List<object>> queryResults = await myContext.ExecuteQueryAsync(query);
+			Console.WriteLine(queryResults[typeof(Room)].Count);
+
+			Console.WriteLine("Done");
+			Console.ReadLine();
+		}
+
 
 	}
 
@@ -92,18 +108,8 @@ namespace GremlinORMSample
 	{
 		public MyContext() : base(Settings.Endpoint, Settings.AuthKey, Settings.Database, Settings.Graph) { }
 
-		public GraphSet<Room> Rooms { get; set; } = new GraphSet<Room>("room");
-
-	}
-
-	public class TestMe
-	{
-		MyContext _context = new MyContext();
-
-		public void TestMy()
-		{
-			Console.WriteLine(_context.Rooms.GetType());
-		}
+		public GraphSet<Room> Rooms { get; set; } = new GraphSet<Room>();
+		public GraphSet<Tag> Tags { get; set; } = new GraphSet<Tag>();
 
 	}
 

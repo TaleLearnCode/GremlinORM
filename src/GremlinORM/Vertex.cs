@@ -16,7 +16,7 @@ namespace TaleLearnCode.GremlinORM
 		public string Id { get; set; } = Guid.NewGuid().ToString();
 
 		[GraphProperty("label", IncludeInGraph = false)]
-		public string Label { get; }
+		public string Label { get; internal set; }
 
 		protected Vertex(string label)
 		{

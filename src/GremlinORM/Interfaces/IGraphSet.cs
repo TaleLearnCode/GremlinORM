@@ -1,4 +1,5 @@
 ﻿using System;
+using TaleLearnCode.GremlinORM.Attributes;
 
 namespace TaleLearnCode.GremlinORM.Interfaces
 {
@@ -6,6 +7,7 @@ namespace TaleLearnCode.GremlinORM.Interfaces
 	{
 		public string Label { get; }
 		public Type GetVertexType();
-		internal void AddFromQuery(object vertex, VertexState vertexState);
+		internal object AddFromQuery(QueryResult queryResult);
+		public VertexAttribute VertexAttribute { get; }
 	}
 }

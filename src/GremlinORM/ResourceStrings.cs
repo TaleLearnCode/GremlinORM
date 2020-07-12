@@ -1,4 +1,5 @@
 ﻿using System;
+using TaleLearnCode.GremlinORM.Attributes;
 
 namespace TaleLearnCode.GremlinORM
 {
@@ -20,6 +21,12 @@ namespace TaleLearnCode.GremlinORM
 
 		internal static string VertexNotInChagneTrackerException() => "Vertex is not in the change tracker; unable to continue.";
 
+		internal static string VertexMustHaveIdentifierException() => "Vertex must have an identifier in order to evaluate it within the change tracker; unable to continue.";
+
+		internal static string VertexAttributeMissingException(Type type)
+		{
+			return $"{type.Name} must use the {typeof(VertexAttribute).Name} in order to use this type with the Gremlin ORM.";
+		}
 
 	}
 
