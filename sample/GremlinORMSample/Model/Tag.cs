@@ -13,15 +13,6 @@ namespace GremlinORMSample.Model
 	{
 
 		/// <summary>
-		/// Gets or sets the identifier of the document.
-		/// </summary>
-		/// <value>
-		/// A <c>string</c> representing the document identifier.
-		/// </value>
-		[GraphProperty("id", Description = "Identifier of the document.")]
-		public string Id { get; set; }
-
-		/// <summary>
 		/// Gets or sets the identifier of the event.  Serves as the partition key.
 		/// </summary>
 		/// <value>

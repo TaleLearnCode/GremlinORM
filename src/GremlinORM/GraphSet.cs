@@ -4,7 +4,6 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
-using System.Threading.Tasks;
 using TaleLearnCode.GremlinORM.Attributes;
 using TaleLearnCode.GremlinORM.Exceptions;
 using TaleLearnCode.GremlinORM.Interfaces;
@@ -12,37 +11,49 @@ using TaleLearnCode.GremlinORM.Interfaces;
 namespace TaleLearnCode.GremlinORM
 {
 
+	/// <summary>
+	/// A representation of the change tracker for a graph object.
+	/// </summary>
+	/// <typeparam name="TVertex">The type of the vertex to tracked.</typeparam>
+	/// <seealso cref="IGraphSet" />
 	public class GraphSet<TVertex> : IGraphSet
 		where TVertex : class, new()
 	{
 
-
-
-
 		private Dictionary<string, TrackedVertex<TVertex>> ChangeTracker { get; } = new Dictionary<string, TrackedVertex<TVertex>>();
 
-		/// <summary>
-		/// Gets the vertex properties.
-		/// </summary>
-		/// <value>
-		/// The vertex properties.
-		/// </value>
-		/// <remarks>Key = Label; Value = Property Name</remarks>
 		private Dictionary<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)> VertexProperties { get; } = new Dictionary<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)>();
 
+		/// <summary>
+		/// Gets the label of the vertex in the database.
+		/// </summary>
+		/// <value>
+		/// A <c>string</c> representing the vertex label.
+		/// </value>
 		public string Label { get; }
 
+		/// <summary>
+		/// Gets the <see cref="VertexAttribute" /> added to the vertex type definition.
+		/// </summary>
+		/// <value>
+		/// The <see cref="VertexAttribute" /> associated with the vertex type definition.
+		/// </value>
 		public VertexAttribute VertexAttribute { get; }
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="GraphSet{TVertex}"/> class.
+		/// </summary>
+		/// <exception cref="TaleLearnCode.GremlinORM.Exceptions.MustInheritFromVertexException">Thrown if <typeparamref name="TVertex"/> does not inherit from <see cref="Vertex"/>.</exception>
+		/// <exception cref="TaleLearnCode.GremlinORM.Exceptions.VertexMustImplementVertexAttributesException">Thrown if <typeparamref name="TVertex"/> does not implement the <see cref="VertexAttribute"/>.</exception>
 		public GraphSet()
 		{
 
 			if (!typeof(TVertex).IsSubclassOf(typeof(Vertex)))
-				throw new Exception(ResourceStrings.TrackedVertexMustInheritFromVertex(typeof(TVertex)));
+				throw new MustInheritFromVertexException(typeof(TVertex));
 
-			Attribute rawVertexAttribute = typeof(TVertex).GetCustomAttribute(typeof(VertexAttribute));
-			if (rawVertexAttribute is null) throw new Exception();
-			else VertexAttribute = (VertexAttribute)rawVertexAttribute;
+			Attribute vertexAttribute = typeof(TVertex).GetCustomAttribute(typeof(VertexAttribute));
+			if (vertexAttribute is null) throw new VertexMustImplementVertexAttributesException(typeof(TVertex));
+			else VertexAttribute = (VertexAttribute)vertexAttribute;
 
 			foreach (PropertyInfo propertyInfo in typeof(TVertex).GetProperties())
 			{
@@ -73,6 +84,15 @@ namespace TaleLearnCode.GremlinORM
 				ChangeTracker.Add(vertexId, new TrackedVertex<TVertex>(vertex, VertexState.Added));
 		}
 
+		/// <summary>
+		/// Updates the specified vertex within the change tracker.
+		/// </summary>
+		/// <param name="vertex">The vertex to be updated.</param>
+		/// <exception cref="ArgumentNullException">Thrown if <paramref name="vertex"/> is null.</exception>
+		/// <exception cref="VertexMustHaveIdentifierException">Thrown if <paramref name="vertex"/> does not have a identifier value.</exception>
+		/// <remarks>
+		/// If the vertex does not already exist in the change tracker (i.e., it has not been queried for), it will be added and the <see cref="VertexState.Modified"/> flag will be used.
+		/// </remarks>
 		public void Update(TVertex vertex)
 		{
 
@@ -81,27 +101,12 @@ namespace TaleLearnCode.GremlinORM
 			string vertexId = GetVertexId(vertex);
 			if (string.IsNullOrWhiteSpace(vertexId)) throw new VertexMustHaveIdentifierException();
 
-			if (ChangeTracker.ContainsKey(vertexId)) throw new VertexNotInChangeTrackerException();
-
-			if (VertexHasChanged(ChangeTracker[vertexId].Vertex, vertex))
+			if ((!ChangeTracker.ContainsKey(vertexId)) || (VertexHasChanged(ChangeTracker[vertexId].Vertex, vertex)))
 			{
 				ChangeTracker[vertexId].Vertex = vertex;
 				ChangeTracker[vertexId].State = VertexState.Modified;
 			}
 
-		}
-
-		public async Task<List<TVertex>> ExecuteQueryAsync(string gremlinQuery, GraphFacade graphFacade)
-		{
-
-			if (graphFacade is null) throw new ArgumentNullException(nameof(graphFacade));
-
-			List<TVertex> reutrnValue = new List<TVertex>();
-
-			TraversalResultset queryResultset = await graphFacade.QueryAsync(gremlinQuery).ConfigureAwait(true);
-
-
-			return reutrnValue;
 		}
 
 		/// <summary>
@@ -128,6 +133,7 @@ namespace TaleLearnCode.GremlinORM
 		/// <returns>The <see cref="VertexState"/> of <paramref name="vertex"/>.</returns>
 		public VertexState GetVertexState(TVertex vertex)
 		{
+			if (vertex is null) throw new ArgumentNullException(nameof(vertex));
 			string vertexId = GetVertexId(vertex);
 			if (!string.IsNullOrWhiteSpace(vertexId) && ChangeTracker.ContainsKey(vertexId))
 				return ChangeTracker[vertexId].State;
@@ -135,6 +141,12 @@ namespace TaleLearnCode.GremlinORM
 				return VertexState.Detached;
 		}
 
+		/// <summary>
+		/// Gets the <see cref="Type"/> of the vertex being tracked.
+		/// </summary>
+		/// <returns>
+		/// A <see cref="Type" /> representing the type of vertex being tracked.
+		/// </returns>
 		public Type GetVertexType()
 		{
 			return typeof(TVertex);
@@ -167,47 +179,50 @@ namespace TaleLearnCode.GremlinORM
 			return ((Vertex)((object)(vertex))).Id; ;
 		}
 
+		/// <summary>
+		/// Add an appropriately typed vertex to the change tracker from a traversal ran in <see cref="GraphContext" />.
+		/// </summary>
+		/// <param name="queryResult">A <see cref="QueryResult" /> representing an individual result from a database traversal.</param>
+		/// <returns>
+		/// The serialized version of the <paramref name="queryResult" />.
+		/// </returns>
 		object IGraphSet.AddFromQuery(QueryResult queryResult)
 		{
+
 			if (queryResult.GremlinObjectType == GremlinObjectType.Vertex)
 			{
 				TVertex vertex = new TVertex();
 
-				SetPropertyValue(ref vertex, "Id", queryResult.Id);
-				SetPropertyValue(ref vertex, "Label", queryResult.Label);
+				SetPropertyValue(ref vertex, nameof(Vertex.Id), queryResult.Id);
+				SetPropertyValue(ref vertex, nameof(Vertex.Label), queryResult.Label);
 
 				foreach (KeyValuePair<string, List<string>> property in queryResult.Properties)
 				{
+
 					PropertyInfo propertyInfo = typeof(TVertex).GetProperty(VertexProperties[property.Key].PropertyName);
-
-
-
-
-					//var propertyValue = Activator.CreateInstance(propertyInfo.PropertyType);
-					//if (VertexProperties[property.Key].IsList)
-					//	foreach (string returnedValue in property.Value)
-					//		((IList)propertyValue).Add(CastPropertyValue(propertyInfo, returnedValue));
-					//else
-					//	propertyValue = CastPropertyValue(propertyInfo, property.Value[0]);
-					//propertyInfo.SetValue(vertex, propertyValue);
-
 
 					if (VertexProperties[property.Key].IsList)
 						propertyInfo.SetValue(vertex, CastPropertyValuesToList(propertyInfo, property.Value));
 					else
 						propertyInfo.SetValue(vertex, CastPropertyValue(propertyInfo, property.Value[0]));
 
-
-
 				}
 				ChangeTracker[queryResult.Id] = new TrackedVertex<TVertex>(vertex, VertexState.Unchanged);
 
 				return vertex;
+
 			}
 
 			return default;
+
 		}
 
+		/// <summary>
+		/// Determines if the vertex has changed.
+		/// </summary>
+		/// <param name="originalVertex">The original vertex value.</param>
+		/// <param name="newVertex">The changed vertex value.</param>
+		/// <returns><c>true</c> if any of the properties are different between <paramref name="originalVertex"/> and <paramref name="newVertex"/>; otherwise, <c>false</c>.</returns>
 		private static bool VertexHasChanged(TVertex originalVertex, TVertex newVertex)
 		{
 			foreach (PropertyInfo propertyInfo in originalVertex.GetType().GetProperties())
@@ -218,8 +233,17 @@ namespace TaleLearnCode.GremlinORM
 			return false;
 		}
 
+		/// <summary>
+		/// Casts the value of <paramref name="destinationPropertyInfo"/> to the appropriate type.
+		/// </summary>
+		/// <param name="destinationPropertyInfo">The destination property information.</param>
+		/// <param name="propertyValue">The property value.</param>
+		/// <returns>An <c>object</c> casted appropriate and set to the value of the property</returns>
 		private static object CastPropertyValue(PropertyInfo destinationPropertyInfo, string propertyValue)
 		{
+
+			// TODO: Look to see if Gremlin native supports other types
+
 			if (destinationPropertyInfo.PropertyType == typeof(bool))
 				return bool.Parse(propertyValue);
 			else if (destinationPropertyInfo.PropertyType == typeof(byte))
@@ -238,6 +262,12 @@ namespace TaleLearnCode.GremlinORM
 				return propertyValue;
 		}
 
+		/// <summary>
+		/// Casts the value of <paramref name="destinationPropertyInfo"/> to a generic list of the appropriate type.
+		/// </summary>
+		/// <param name="destinationPropertyInfo">The destination property information.</param>
+		/// <param name="propertyValues">The property values.</param>
+		/// <returns>A <see cref="List{object}"/> representing the casted property value.</returns>
 		private static List<object> CastPropertyValuesToList(PropertyInfo destinationPropertyInfo, List<string> propertyValues)
 		{
 
@@ -273,6 +303,12 @@ namespace TaleLearnCode.GremlinORM
 
 		}
 
+		/// <summary>
+		/// Sets the property value.
+		/// </summary>
+		/// <param name="vertex">The vertex where to set the value.</param>
+		/// <param name="propertyName">Name of the property to be set.</param>
+		/// <param name="propertyValue">The property value to set.</param>
 		private static void SetPropertyValue(ref TVertex vertex, string propertyName, string propertyValue)
 		{
 			PropertyInfo propertyInfo = typeof(TVertex).GetProperty(propertyName);

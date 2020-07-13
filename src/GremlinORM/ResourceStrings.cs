@@ -19,6 +19,11 @@ namespace TaleLearnCode.GremlinORM
 			return $"{type.Name} does not inherit from {typeof(Vertex).Name}. Tracked vertices must inherit from {typeof(Vertex).Name}.";
 		}
 
+		internal static string VertexMustImplementVertexAttributes(Type type)
+		{
+			return $"{type.Name} does not implement the {typeof(VertexAttribute)} which is required in order for the vertex to be tracked.";
+		}
+
 		internal static string VertexNotInChagneTrackerException() => "Vertex is not in the change tracker; unable to continue.";
 
 		internal static string VertexMustHaveIdentifierException() => "Vertex must have an identifier in order to evaluate it within the change tracker; unable to continue.";

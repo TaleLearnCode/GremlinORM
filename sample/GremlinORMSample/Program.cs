@@ -1,15 +1,11 @@
 ﻿using GremlinORMSample.Model;
 using System;
 using System.Collections.Generic;
-using System.Security.Cryptography.X509Certificates;
 using System.Threading.Tasks;
 using TaleLearnCode.GremlinORM;
 
 namespace GremlinORMSample
 {
-
-	// TODO: Add filter for SchemaDefinition
-
 
 	class Program
 	{
@@ -20,20 +16,16 @@ namespace GremlinORMSample
 			//string query = "g.V().hasLabel('room').has('eventId', 10)";
 			string query = "g.V().has('eventId', 10)";
 
-
-			//await PerformQueryCosmos(query);
-
-
-			//MyContext myContext = new MyContext();
-			//Dictionary<Type, List<object>> queryResults = await myContext.ExecuteQueryAsync(query);
-			//Console.WriteLine(queryResults[typeof(Room)].Count);
-
-			//Console.WriteLine("Done");
-			//Console.ReadLine();
-
-			await PerformContextQuery(query);
-
-
+			int mainOption = 2;
+			switch (mainOption)
+			{
+				case 1:
+					await PerformQueryCosmos(query);
+					break;
+				case 2:
+					await PerformContextQuery(query);
+					break;
+			}
 
 		}
 
@@ -95,12 +87,15 @@ namespace GremlinORMSample
 		{
 			MyContext myContext = new MyContext();
 			Dictionary<Type, List<object>> queryResults = await myContext.ExecuteQueryAsync(query);
-			Console.WriteLine(queryResults[typeof(Room)].Count);
+
+			foreach (var tag in queryResults[typeof(Tag)])
+			{
+				Console.WriteLine(((Tag)tag).Name);
+			}
 
 			Console.WriteLine("Done");
 			Console.ReadLine();
 		}
-
 
 	}
 
