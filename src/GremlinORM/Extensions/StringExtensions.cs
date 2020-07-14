@@ -1,5 +1,6 @@
 ﻿using System.Collections.Generic;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace TaleLearnCode.GremlinORM.Extensions
 {
@@ -56,7 +57,9 @@ namespace TaleLearnCode.GremlinORM.Extensions
 					else
 						currentStr.Append(input[i]);
 				}
-				result.Add(currentStr.ToString().Replace("\\u0022", "\""));
+				//result.Add(currentStr.ToString().Replace("\\u0022", "\""));
+				result.Add(Regex.Unescape(currentStr.ToString()));
+
 			}
 			return result.ToArray();
 		}

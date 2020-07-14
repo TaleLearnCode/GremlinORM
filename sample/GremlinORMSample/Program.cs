@@ -89,9 +89,7 @@ namespace GremlinORMSample
 			Dictionary<Type, List<object>> queryResults = await myContext.ExecuteQueryAsync(query);
 
 			foreach (var tag in queryResults[typeof(Tag)])
-			{
 				Console.WriteLine(((Tag)tag).Name);
-			}
 
 			Console.WriteLine("Done");
 			Console.ReadLine();
