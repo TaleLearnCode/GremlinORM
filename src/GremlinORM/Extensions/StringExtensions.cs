@@ -58,6 +58,7 @@ namespace TaleLearnCode.GremlinORM.Extensions
 						currentStr.Append(input[i]);
 				}
 				//result.Add(currentStr.ToString().Replace("\\u0022", "\""));
+				// TODO: Maybe need documentation about removing escaped values
 				result.Add(Regex.Unescape(currentStr.ToString()));
 
 			}

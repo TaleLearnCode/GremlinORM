@@ -4,6 +4,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.Linq;
 using System.Reflection;
+using System.Text;
 using TaleLearnCode.GremlinORM.Attributes;
 using TaleLearnCode.GremlinORM.Exceptions;
 using TaleLearnCode.GremlinORM.Interfaces;
@@ -217,6 +218,43 @@ namespace TaleLearnCode.GremlinORM
 
 		}
 
+		List<string> IGraphSet.GetSaveChangesQueries()
+		{
+			List<string> saveChangesQueries = new List<string>();
+
+			foreach (TrackedVertex<TVertex> trackedVertex in ChangeTracker.Values)
+			{
+				switch (trackedVertex.State)
+				{
+					case VertexState.Added:
+						StringBuilder addGremlin = new StringBuilder($"g.addV('{VertexAttribute.Label}')");
+						//foreach (KeyValuePair<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)> vertexProperty in VertexProperties)
+						//{
+						//	PropertyInfo propertyInfo = trackedVertex.Vertex.GetType().GetProperty(vertexProperty.Value.PropertyName);
+						//	if (vertexProperty.Value.IsList)
+						//	{
+						//		// TODO: Handle property lists
+						//	}
+						//	else
+						//	{
+						//		addGremlin.Append($".property('{vertexProperty.Key}', '{propertyInfo.GetValue(trackedVertex.Vertex)}')");
+						//	}
+						//}
+						break;
+					case VertexState.Modified:
+						break;
+					case VertexState.Deleted:
+						string vertexId = GetVertexId(trackedVertex.Vertex);
+						if (!string.IsNullOrWhiteSpace(vertexId))
+							saveChangesQueries.Add($"g.V('{vertexId}').drop()");
+						break;
+				}
+			}
+
+
+			return saveChangesQueries;
+		}
+
 		/// <summary>
 		/// Determines if the vertex has changed.
 		/// </summary>
@@ -314,6 +352,7 @@ namespace TaleLearnCode.GremlinORM
 			PropertyInfo propertyInfo = typeof(TVertex).GetProperty(propertyName);
 			propertyInfo.SetValue(vertex, CastPropertyValue(propertyInfo, propertyValue));
 		}
+
 
 	}
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using TaleLearnCode.GremlinORM.Attributes;
 
 namespace TaleLearnCode.GremlinORM.Interfaces
@@ -38,6 +39,8 @@ namespace TaleLearnCode.GremlinORM.Interfaces
 		/// <param name="queryResult">A <see cref="QueryResult"/> representing an individual result from a database traversal.</param>
 		/// <returns>The serialized version of the <paramref name="queryResult"/>.</returns>
 		internal object AddFromQuery(QueryResult queryResult);
+
+		internal List<string> GetSaveChangesQueries();
 
 	}
 }
