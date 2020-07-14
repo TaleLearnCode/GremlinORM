@@ -5,6 +5,10 @@ using System.Reflection;
 namespace TaleLearnCode.GremlinORM
 {
 
+	/// <summary>
+	/// Provides access to change tracking information and operations for vertex instances the context is tracking.
+	/// </summary>
+	/// <typeparam name="TVertex">The type of the vertex being tracked.</typeparam>
 	internal class TrackedVertex<TVertex>
 	{
 
@@ -14,6 +18,13 @@ namespace TaleLearnCode.GremlinORM
 
 		private static readonly int _maxVertexState = Enum.GetValues(typeof(VertexState)).Cast<int>().Max();
 
+		/// <summary>
+		/// Gets or sets the state of the vertex being tracked.
+		/// </summary>
+		/// <value>
+		/// A <see cref="VertexState"/> representing the state of the vertex being tracked.
+		/// </value>
+		/// <exception cref="ArgumentException">Thrown if set <see cref="VertexState"/> is not a valid enumeration value.</exception>
 		internal VertexState State
 		{
 			get => _vertexState;
@@ -25,6 +36,12 @@ namespace TaleLearnCode.GremlinORM
 			}
 		}
 
+		/// <summary>
+		/// Gets or sets the vertex being tracked.
+		/// </summary>
+		/// <value>
+		/// The vertex being tracked.
+		/// </value>
 		internal TVertex Vertex
 		{
 			get => _vertex;
@@ -38,6 +55,11 @@ namespace TaleLearnCode.GremlinORM
 			}
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TrackedVertex{TVertex}"/> class.
+		/// </summary>
+		/// <param name="vertex">The vertex to be tracked.</param>
+		/// <param name="vertexState">State of the vertex being tracked.</param>
 		internal TrackedVertex(TVertex vertex, VertexState vertexState)
 		{
 			_originalVertex = vertex;
@@ -45,6 +67,11 @@ namespace TaleLearnCode.GremlinORM
 			_vertexState = vertexState;
 		}
 
+		/// <summary>
+		/// Initializes a new instance of the <see cref="TrackedVertex{TVertex}"/> class.
+		/// </summary>
+		/// <param name="originalVertex">The original vertex value.</param>
+		/// <param name="currentVertex">The current vertex value.</param>
 		internal TrackedVertex(TVertex originalVertex, TVertex currentVertex)
 		{
 			_originalVertex = originalVertex;

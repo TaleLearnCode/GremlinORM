@@ -10,12 +10,10 @@ namespace TaleLearnCode.GremlinORM.Exceptions
 	public class VertexAlreadyInChangeTrackerException : Exception
 	{
 
-		// TODO: Chane the exception to be helpful
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VertexAlreadyInChangeTrackerException"/> class.
 		/// </summary>
-		public VertexAlreadyInChangeTrackerException() : base(ResourceStrings.VertexNotInChagneTrackerException()) { }
+		public VertexAlreadyInChangeTrackerException() : base(ResourceStrings.VertexNotInChangeTrackerException()) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VertexAlreadyInChangeTrackerException"/> class.

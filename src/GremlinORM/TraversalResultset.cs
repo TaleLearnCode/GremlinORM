@@ -2,7 +2,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text;
 using System.Text.Encodings.Web;
 using System.Text.Json;
 using System.Text.Unicode;
@@ -82,7 +81,7 @@ namespace TaleLearnCode.GremlinORM
 									Encoder = JavaScriptEncoder.Create(UnicodeRanges.All)
 								};
 
-								string[] propertyValueArray = SplitCsv3(JsonSerializer.Serialize(value.Value, options));
+								string[] propertyValueArray = SplitCSV(JsonSerializer.Serialize(value.Value, options));
 
 								if (propertyValueArray.Length > 0)
 									for (int i = 1; i < propertyValueArray.Length; i++)
@@ -119,31 +118,10 @@ namespace TaleLearnCode.GremlinORM
 
 		}
 
-		// TODO: Make this an extension method
-		private static string[] SplitCsv3(string line)
+		private static string[] SplitCSV(string line)
 		{
-			List<string> result = new List<string>();
-			StringBuilder currentStr = new StringBuilder("");
-			bool inQuotes = false;
-			for (int i = 0; i < line.Length; i++) // For each character
-			{
-				if (line[i] == '\"') // Quotes are closing or opening
-					inQuotes = !inQuotes;
-				else if (line[i] == ',') // Comma
-				{
-					if (!inQuotes) // If not in quotes, end of current string, add it to result
-					{
-						result.Add(currentStr.ToString());
-						currentStr.Clear();
-					}
-					else
-						currentStr.Append(line[i]); // If in quotes, just add it 
-				}
-				else // Add any other character to current string
-					currentStr.Append(line[i]);
-			}
-			result.Add(currentStr.ToString().Replace("\\u0022", "\""));
-			return result.ToArray(); // Return array of all strings
+			return line.SplitCSV();
+			// TODO: Make this an extension method
 		}
 
 	}

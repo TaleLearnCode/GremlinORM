@@ -1,47 +1,15 @@
 ﻿using Gremlin.Net.Driver;
 using Gremlin.Net.Structure.IO.GraphSON;
 using System.Threading.Tasks;
-using TaleLearnCode.GremlinORM;
 
 namespace TaleLearnCode.GremlinORM
 {
+
 	/// <summary>
-	/// Provides access to graph related information.
+	/// Provides a facade to access the graph database.
 	/// </summary>
 	public class GraphFacade
 	{
-
-		/// <summary>
-		/// Gets the endpoint of the Cosmos DB account.
-		/// </summary>
-		/// <value>
-		/// A <c>string</c> that represents the Cosmos DB account endpoint.
-		/// </value>
-		public string Endpoint { get; }
-
-		/// <summary>
-		/// Gets the authentication key for the Cosmos DB account.
-		/// </summary>
-		/// <value>
-		/// A <c>string</c> representing the Cosmos DB account authentication key.
-		/// </value>
-		public string AuthKey { get; }
-
-		/// <summary>
-		/// Gets the name of the Gremlin database.
-		/// </summary>
-		/// <value>
-		/// A <c>string</c> representing the Gremlin database name.
-		/// </value>
-		public string DatabaseName { get; }
-
-		/// <summary>
-		/// Gets the name of the graph.
-		/// </summary>
-		/// <value>
-		/// A <c>string</c> representing the graph name.
-		/// </value>
-		public string GraphName { get; }
 
 		/// <summary>
 		/// Gets the <see cref="GremlinClient"/> being used in the background for the Gremlin operations.
@@ -54,17 +22,15 @@ namespace TaleLearnCode.GremlinORM
 		/// <summary>
 		/// Initializes a new instance of the <see cref="GraphFacade"/> class.
 		/// </summary>
-		/// <param name="endpoint">The Cosmos DB account endpoint.</param>
-		/// <param name="authKey">The Cosmos DB account authentication key.</param>
-		/// <param name="databaseName">Name of the database.</param>
-		/// <param name="graphName">Name of the graph.</param>
-		public GraphFacade(string endpoint, string authKey, string databaseName, string graphName)
+		/// <param name="hostname">The hostname of the Gremlin server to connect to.</param>
+		/// <param name="password">The password to use for connecting to the Gremlin server.</param>
+		/// <param name="databaseName">Name of the Gremlin database on the server to connect to.</param>
+		/// <param name="graphName">Name of the graph to connect to.</param>
+		/// <param name="port">The port on which the Gremlin Server can be reached.  Default is 443.</param>
+		/// <param name="enableSSL">If set to <c>true</c> SSL shall be used for connecting to the server.  Default is true.</param>
+		public GraphFacade(string hostname, string password, string databaseName, string graphName, int port = 443, bool enableSSL = true)
 		{
-			Endpoint = endpoint;
-			AuthKey = authKey;
-			DatabaseName = databaseName;
-			GraphName = graphName;
-			var gremlinServer = new GremlinServer(endpoint, 443, enableSsl: true, username: "/dbs/" + databaseName + "/colls/" + graphName, password: authKey);
+			var gremlinServer = new GremlinServer(hostname, port, enableSsl: enableSSL, username: "/dbs/" + databaseName + "/colls/" + graphName, password: password);
 			GremlinClient = new GremlinClient(gremlinServer, new GraphSON2Reader(), new GraphSON2Writer(), GremlinClient.GraphSON2MimeType);
 		}
 

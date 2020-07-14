@@ -10,12 +10,10 @@ namespace TaleLearnCode.GremlinORM.Exceptions
 	public class VertexNotInChangeTrackerException : Exception
 	{
 
-		// TODO: Chane the exception to be helpful
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VertexNotInChangeTrackerException"/> class.
 		/// </summary>
-		public VertexNotInChangeTrackerException() : base(ResourceStrings.VertexNotInChagneTrackerException()) { }
+		public VertexNotInChangeTrackerException() : base(ResourceStrings.VertexNotInChangeTrackerException()) { }
 
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VertexNotInChangeTrackerException"/> class.

@@ -10,8 +10,6 @@ namespace TaleLearnCode.GremlinORM.Exceptions
 	public class VertexMustHaveIdentifierException : Exception
 	{
 
-		// TODO: Chane the exception to be helpful
-
 		/// <summary>
 		/// Initializes a new instance of the <see cref="VertexMustHaveIdentifierException"/> class.
 		/// </summary>

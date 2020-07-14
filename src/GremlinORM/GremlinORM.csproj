@@ -22,5 +22,18 @@
     </PackageReference>
     <PackageReference Include="System.Text.Json" Version="4.7.2" />
   </ItemGroup>
+  <ItemGroup>
+    <Compile Update="GremlinORMResources.Designer.cs">
+      <DesignTime>True</DesignTime>
+      <AutoGen>True</AutoGen>
+      <DependentUpon>GremlinORMResources.resx</DependentUpon>
+    </Compile>
+  </ItemGroup>
+  <ItemGroup>
+    <EmbeddedResource Update="GremlinORMResources.resx">
+      <Generator>ResXFileCodeGenerator</Generator>
+      <LastGenOutput>GremlinORMResources.Designer.cs</LastGenOutput>
+    </EmbeddedResource>
+  </ItemGroup>
 
 </Project>

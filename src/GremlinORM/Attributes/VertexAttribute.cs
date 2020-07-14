@@ -35,6 +35,12 @@ namespace TaleLearnCode.GremlinORM.Attributes
 		/// </value>
 		public bool SoftDelete { get; set; }
 
+		/// <summary>
+		/// Gets or sets the property naming policy.
+		/// </summary>
+		/// <value>
+		/// The property naming policy.
+		/// </value>
 		public PropertyNamingPolicy PropertyNamingPolicy { get; set; } = PropertyNamingPolicy.CamelCase;
 
 		/// <summary>
