@@ -63,7 +63,11 @@ namespace TaleLearnCode.GremlinORM
 				if (rawGraphPropertyAttribute != null)
 				{
 					graphPropertyAttribute = (GraphPropertyAttribute)rawGraphPropertyAttribute;
-					VertexProperties.Add(graphPropertyAttribute.Key, (propertyInfo.Name, propertyInfo.PropertyType.IsInstanceOfType(typeof(IList)), graphPropertyAttribute));
+					if (graphPropertyAttribute.IncludeInGraph)
+						if (IsTypeValidForGremlin(propertyInfo.PropertyType))
+							VertexProperties.Add(graphPropertyAttribute.Key, (propertyInfo.Name, propertyInfo.PropertyType.IsInstanceOfType(typeof(IList)), graphPropertyAttribute));
+						else
+							throw new VertexPropertyNotValidTypeForGremlinException(propertyInfo);
 				}
 			}
 
@@ -228,18 +232,16 @@ namespace TaleLearnCode.GremlinORM
 				{
 					case VertexState.Added:
 						StringBuilder addGremlin = new StringBuilder($"g.addV('{VertexAttribute.Label}')");
-						//foreach (KeyValuePair<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)> vertexProperty in VertexProperties)
-						//{
-						//	PropertyInfo propertyInfo = trackedVertex.Vertex.GetType().GetProperty(vertexProperty.Value.PropertyName);
-						//	if (vertexProperty.Value.IsList)
-						//	{
-						//		// TODO: Handle property lists
-						//	}
-						//	else
-						//	{
-						//		addGremlin.Append($".property('{vertexProperty.Key}', '{propertyInfo.GetValue(trackedVertex.Vertex)}')");
-						//	}
-						//}
+						foreach (KeyValuePair<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)> vertexProperty in VertexProperties)
+						{
+							PropertyInfo propertyInfo = trackedVertex.Vertex.GetType().GetProperty(vertexProperty.Value.PropertyName);
+							if (vertexProperty.Value.GraphPropertyAttribute.IncludeInGraph)
+								if (vertexProperty.Value.IsList)
+									foreach (var listItem in propertyInfo.GetValue(trackedVertex.Vertex) as List<object>)
+										addGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, listItem)})");
+								else
+									addGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, propertyInfo.GetValue(trackedVertex.Vertex))})");
+						}
 						break;
 					case VertexState.Modified:
 						break;
@@ -353,6 +355,94 @@ namespace TaleLearnCode.GremlinORM
 			propertyInfo.SetValue(vertex, CastPropertyValue(propertyInfo, propertyValue));
 		}
 
+		/// <summary>
+		/// Determines whether is <paramref name="type"/> is valid for a Gremlin database.
+		/// </summary>
+		/// <param name="type">The <see cref="Type"/> to be evaluated.</param>
+		/// <returns>
+		///   <c>true</c> if <paramref name="type"/> is valid for a Gremlin database; otherwise, <c>false</c>.
+		/// </returns>
+		private static bool IsTypeValidForGremlin(Type type)
+		{
+			// TODO: Look at a better of figuring out what is a valid type
+			if (type.IsPrimitive)
+				return true;
+			else if (type == typeof(string))
+				return true;
+			else if (type == typeof(DateTime))
+				return true;
+			else if (type == typeof(Uri))
+				return true;
+			else
+				return false;
+		}
+
+		/// <summary>
+		/// Converts an numeric object to its string representation/  A return value
+		/// indicates whether the conversion succeeded or failed.
+		/// </summary>
+		/// <param name="testValue">The numeric value to convert.</param>
+		/// <param name="stringValue">The resulting string representation of the number.</param>
+		/// <returns><c>true</c> if <paramref name="testValue"/> was converted successfully; otherwise, false.</returns>
+		private static bool TryParseNumber(object testValue, out string stringValue)
+		{
+
+			bool returnValue = false;
+			stringValue = default;
+
+			bool isFloat = float.TryParse(testValue.ToString(), out var floatNumber);
+			if (isFloat)
+			{
+				bool isLong = long.TryParse(testValue.ToString(), out var longNumber);
+				if (isLong)
+
+				{
+					returnValue = true;
+					stringValue = longNumber.ToString(CultureInfo.InvariantCulture);
+				}
+				else
+				{
+					returnValue = true;
+					stringValue = floatNumber.ToString(CultureInfo.InvariantCulture);
+				}
+			}
+
+			bool isDecimal = decimal.TryParse(testValue.ToString(), out var decimalNumber);
+			if (isDecimal)
+			{
+				returnValue = true;
+				stringValue = decimalNumber.ToString(CultureInfo.InvariantCulture);
+			}
+
+			return returnValue;
+
+		}
+
+		/// <summary>
+		/// Gets the property value for a gremlin query.
+		/// </summary>
+		/// <param name="propertyInfo">Detail of the property being investigated.</param>
+		/// <param name="rawPropertyValue">The value of the vertex property.</param>
+		/// <returns>A <c>string</c> representing the property value portion of a .Property gremlin statement.</returns>
+		[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Booleans within Gremlin are required to be lowered cased.")]
+		private static string GetPropertyValueForGremlinQuery(PropertyInfo propertyInfo, object rawPropertyValue)
+		{
+
+			string propertyValue = string.Empty;
+
+			if (propertyInfo.PropertyType == typeof(bool))
+				propertyValue = rawPropertyValue.ToString().ToLower(CultureInfo.InvariantCulture);
+			else if (propertyInfo.PropertyType == typeof(string))
+				propertyValue = $"'{rawPropertyValue}'";
+			else
+				if (TryParseNumber(rawPropertyValue, out string stringValue))
+				propertyValue = stringValue;
+			else
+				propertyValue = $"'{rawPropertyValue}'";
+
+			return propertyValue;
+
+		}
 
 	}
 

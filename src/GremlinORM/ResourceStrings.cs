@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Globalization;
+using System.Reflection;
 using System.Resources;
 using TaleLearnCode.GremlinORM.Attributes;
 
@@ -86,6 +87,17 @@ namespace TaleLearnCode.GremlinORM
 						GetString(nameof(VertexAttributeMissingException),
 							nameof(type), "VertexAttribute"),
 						type.Name, typeof(VertexAttribute));
+
+		/// <summary>
+		/// Message for exception thrown when a Vertex property is not serializable in a Gremlin database.
+		/// </summary>
+		/// <param name="propertyInfo">Information on the property that has an incompatible type for Gremlin database.</param>
+		/// <returns>The property '{PropertyName}' is of type '{TypeName}' which is not compatible with Gremlin databases.  Please consider setting the IncludeInGraph flag to false for the property or change the property's type to a valid type for Gremlin databases.</returns>
+		internal static string VertexPropertyNotValidTypeForGremlinException(PropertyInfo propertyInfo)
+		=> string.Format(CultureInfo.CurrentCulture,
+					GetString(nameof(VertexPropertyNotValidTypeForGremlinException),
+						"PropertyName", "TypeName"),
+					propertyInfo.Name, propertyInfo.PropertyType.Name);
 
 	}
 

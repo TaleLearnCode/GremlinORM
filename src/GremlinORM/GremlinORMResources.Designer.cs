@@ -113,5 +113,14 @@ namespace TaleLearnCode.GremlinORM {
                 return ResourceManager.GetString("VertexNotInChangeTrackerException", resourceCulture);
             }
         }
+        
+        /// <summary>
+        ///   Looks up a localized string similar to The property &apos;{PropertyName}&apos; is of type &apos;{TypeName}&apos; which is not compatible with Gremlin databases.  Please consider setting the IncludeInGraph flag to false for the property or change the property&apos;s type to a valid type for Gremlin databases..
+        /// </summary>
+        internal static string VertexPropertyNotValidTypeForGremlin {
+            get {
+                return ResourceManager.GetString("VertexPropertyNotValidTypeForGremlin", resourceCulture);
+            }
+        }
     }
 }

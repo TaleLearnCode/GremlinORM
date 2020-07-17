@@ -135,4 +135,7 @@
   <data name="VertexNotInChangeTrackerException" xml:space="preserve">
     <value>Vertex is not in the change tracker; unable to continue.</value>
   </data>
+  <data name="VertexPropertyNotValidTypeForGremlin" xml:space="preserve">
+    <value>The property '{PropertyName}' is of type '{TypeName}' which is not compatible with Gremlin databases.  Please consider setting the IncludeInGraph flag to false for the property or change the property's type to a valid type for Gremlin databases.</value>
+  </data>
 </root>
