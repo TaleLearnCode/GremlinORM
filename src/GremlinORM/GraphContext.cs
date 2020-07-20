@@ -91,6 +91,19 @@ namespace TaleLearnCode.GremlinORM
 
 		}
 
+		public async Task SaveChangesAsync()
+		{
+			foreach (KeyValuePair<string, (string PropertyName, Type VertexType)> trackedVertexType in TrackedVertexTypes)
+			{
+				List<string> saveChangesQueries = new List<string>();
+				saveChangesQueries.AddRange(((IGraphSet)this.GetType().GetProperty(trackedVertexType.Value.PropertyName).GetValue(this)).GetSaveChangesQueries());
+				foreach (string saveChangesQuery in saveChangesQueries)
+				{
+					await GraphFacade.QueryAsync(saveChangesQuery).ConfigureAwait(true);
+				}
+			}
+		}
+
 	}
 
 }

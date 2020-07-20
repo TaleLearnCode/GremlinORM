@@ -234,16 +234,32 @@ namespace TaleLearnCode.GremlinORM
 						StringBuilder addGremlin = new StringBuilder($"g.addV('{VertexAttribute.Label}')");
 						foreach (KeyValuePair<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)> vertexProperty in VertexProperties)
 						{
-							PropertyInfo propertyInfo = trackedVertex.Vertex.GetType().GetProperty(vertexProperty.Value.PropertyName);
 							if (vertexProperty.Value.GraphPropertyAttribute.IncludeInGraph)
+							{
+								PropertyInfo propertyInfo = trackedVertex.Vertex.GetType().GetProperty(vertexProperty.Value.PropertyName);
 								if (vertexProperty.Value.IsList)
 									foreach (var listItem in propertyInfo.GetValue(trackedVertex.Vertex) as List<object>)
 										addGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, listItem)})");
 								else
 									addGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, propertyInfo.GetValue(trackedVertex.Vertex))})");
+							}
 						}
+						saveChangesQueries.Add(addGremlin.ToString());
 						break;
 					case VertexState.Modified:
+						StringBuilder updateGremlin = new StringBuilder($"g.V('{GetVertexId(trackedVertex.Vertex)}')");
+						foreach (KeyValuePair<string, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute)> vertexProperty in VertexProperties)
+							if (vertexProperty.Value.GraphPropertyAttribute.IncludeInGraph)
+							{
+								PropertyInfo propertyInfo = trackedVertex.Vertex.GetType().GetProperty(vertexProperty.Value.PropertyName);
+								if (propertyInfo.GetValue(trackedVertex.Vertex) != propertyInfo.GetValue(trackedVertex.OriginalVertex))
+									if (vertexProperty.Value.IsList)
+										foreach (var listItem in propertyInfo.GetValue(trackedVertex.Vertex) as List<object>)
+											updateGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, listItem)})");
+									else
+										updateGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, propertyInfo.GetValue(trackedVertex.Vertex))})");
+							}
+						saveChangesQueries.Add(updateGremlin.ToString());
 						break;
 					case VertexState.Deleted:
 						string vertexId = GetVertexId(trackedVertex.Vertex);
@@ -428,7 +444,7 @@ namespace TaleLearnCode.GremlinORM
 		private static string GetPropertyValueForGremlinQuery(PropertyInfo propertyInfo, object rawPropertyValue)
 		{
 
-			string propertyValue = string.Empty;
+			string propertyValue;
 
 			if (propertyInfo.PropertyType == typeof(bool))
 				propertyValue = rawPropertyValue.ToString().ToLower(CultureInfo.InvariantCulture);

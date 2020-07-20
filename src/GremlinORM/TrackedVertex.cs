@@ -14,7 +14,7 @@ namespace TaleLearnCode.GremlinORM
 
 		private VertexState _vertexState;
 		private TVertex _vertex;
-		private TVertex _originalVertex;
+		//private TVertex _originalVertex;
 
 		private static readonly int _maxVertexState = Enum.GetValues(typeof(VertexState)).Cast<int>().Max();
 
@@ -56,13 +56,21 @@ namespace TaleLearnCode.GremlinORM
 		}
 
 		/// <summary>
+		/// Gets the original vertex.
+		/// </summary>
+		/// <value>
+		/// A representation of the vertex before any change was made to it.
+		/// </value>
+		internal TVertex OriginalVertex { get; private set; }
+
+		/// <summary>
 		/// Initializes a new instance of the <see cref="TrackedVertex{TVertex}"/> class.
 		/// </summary>
 		/// <param name="vertex">The vertex to be tracked.</param>
 		/// <param name="vertexState">State of the vertex being tracked.</param>
 		internal TrackedVertex(TVertex vertex, VertexState vertexState)
 		{
-			_originalVertex = vertex;
+			OriginalVertex = vertex;
 			_vertex = vertex;
 			_vertexState = vertexState;
 		}
@@ -74,7 +82,7 @@ namespace TaleLearnCode.GremlinORM
 		/// <param name="currentVertex">The current vertex value.</param>
 		internal TrackedVertex(TVertex originalVertex, TVertex currentVertex)
 		{
-			_originalVertex = originalVertex;
+			OriginalVertex = originalVertex;
 			_vertex = currentVertex;
 			_vertexState = (HasVertexChanged(currentVertex)) ? VertexState.Modified : VertexState.Unchanged;
 		}
