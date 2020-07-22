@@ -106,7 +106,7 @@ namespace TaleLearnCode.GremlinORM
 			string vertexId = GetVertexId(vertex);
 			if (string.IsNullOrWhiteSpace(vertexId)) throw new VertexMustHaveIdentifierException();
 
-			if ((!ChangeTracker.ContainsKey(vertexId)) || (VertexHasChanged(ChangeTracker[vertexId].Vertex, vertex)))
+			if ((ChangeTracker.ContainsKey(vertexId)) && (VertexHasChanged(ChangeTracker[vertexId].Vertex, vertex)))
 			{
 				ChangeTracker[vertexId].Vertex = vertex;
 				ChangeTracker[vertexId].State = VertexState.Modified;

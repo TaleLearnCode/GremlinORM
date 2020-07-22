@@ -71,17 +71,22 @@ namespace GremlinORMSample
 
 		private static async Task CRUD()
 		{
+
 			MyContext myContext = new MyContext();
-			Dictionary<Type, List<object>> queryResults = await myContext.ExecuteQueryAsync("g.V('dd4f438f-351c-47a8-9e9d-adf005848e5c')");
-			foreach (var tag in queryResults[typeof(Tag)])
-				//Console.WriteLine(((Tag)tag).Name);
-				((Tag)tag).Name = "TLC";
-
-
-
-			//Tag newTag = new Tag() { EventId = "11", Name = "TaleLearnCode" };
-			//myContext.Tags.Add(newTag);
+			Tag newTag = new Tag() { EventId = 11, Name = "TaleLearnCode" };
+			myContext.Tags.Add(newTag);
 			await myContext.SaveChangesAsync();
+
+			//Dictionary<Type, List<object>> queryResults = await myContext.ExecuteQueryAsync("g.V('dd4f438f-351c-47a8-9e9d-adf005848e5c')");
+			//foreach (var tag in queryResults[typeof(Tag)])
+			////Console.WriteLine(((Tag)tag).Name);
+			//{
+			//	((Tag)tag).Name = "TLC";
+			//	myContext.Tags.Update((Tag)tag);
+			//}
+
+
+
 
 			Console.WriteLine("Done");
 			Console.ReadLine();
