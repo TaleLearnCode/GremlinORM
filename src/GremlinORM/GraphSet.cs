@@ -239,9 +239,9 @@ namespace TaleLearnCode.GremlinORM
 								PropertyInfo propertyInfo = trackedVertex.Vertex.GetType().GetProperty(vertexProperty.Value.PropertyName);
 								if (vertexProperty.Value.IsList)
 									foreach (var listItem in propertyInfo.GetValue(trackedVertex.Vertex) as List<object>)
-										addGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, listItem)})");
+										addGremlin.Append(GetPropertyValueForGremlinQuery(propertyInfo, vertexProperty.Value, listItem));
 								else
-									addGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, propertyInfo.GetValue(trackedVertex.Vertex))})");
+									addGremlin.Append(GetPropertyValueForGremlinQuery(propertyInfo, vertexProperty.Value, propertyInfo.GetValue(trackedVertex.Vertex)));
 							}
 						}
 						saveChangesQueries.Add(addGremlin.ToString());
@@ -255,9 +255,9 @@ namespace TaleLearnCode.GremlinORM
 								if (propertyInfo.GetValue(trackedVertex.Vertex) != propertyInfo.GetValue(trackedVertex.OriginalVertex))
 									if (vertexProperty.Value.IsList)
 										foreach (var listItem in propertyInfo.GetValue(trackedVertex.Vertex) as List<object>)
-											updateGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, listItem)})");
+											updateGremlin.Append(GetPropertyValueForGremlinQuery(propertyInfo, vertexProperty.Value, listItem));
 									else
-										updateGremlin.Append($".property('{vertexProperty.Key}', {GetPropertyValueForGremlinQuery(propertyInfo, propertyInfo.GetValue(trackedVertex.Vertex))})");
+										updateGremlin.Append(GetPropertyValueForGremlinQuery(propertyInfo, vertexProperty.Value, propertyInfo.GetValue(trackedVertex.Vertex)));
 							}
 						saveChangesQueries.Add(updateGremlin.ToString());
 						break;
@@ -441,20 +441,26 @@ namespace TaleLearnCode.GremlinORM
 		/// <param name="rawPropertyValue">The value of the vertex property.</param>
 		/// <returns>A <c>string</c> representing the property value portion of a .Property gremlin statement.</returns>
 		[System.Diagnostics.CodeAnalysis.SuppressMessage("Globalization", "CA1308:Normalize strings to uppercase", Justification = "Booleans within Gremlin are required to be lowered cased.")]
-		private static string GetPropertyValueForGremlinQuery(PropertyInfo propertyInfo, object rawPropertyValue)
+		private static string GetPropertyValueForGremlinQuery(PropertyInfo propertyInfo, (string PropertyName, bool IsList, GraphPropertyAttribute GraphPropertyAttribute) propertyAttributes, object rawPropertyValue)
 		{
 
-			string propertyValue;
+			// TODO: Add IsRequired validation
 
-			if (propertyInfo.PropertyType == typeof(bool))
-				propertyValue = rawPropertyValue.ToString().ToLower(CultureInfo.InvariantCulture);
-			else if (propertyInfo.PropertyType == typeof(string))
-				propertyValue = $"'{rawPropertyValue}'";
-			else
-				if (TryParseNumber(rawPropertyValue, out string stringValue))
-				propertyValue = stringValue;
-			else
-				propertyValue = $"'{rawPropertyValue}'";
+			string propertyValue = string.Empty;
+
+			if (rawPropertyValue != default && !string.IsNullOrWhiteSpace(rawPropertyValue.ToString()))
+			{
+				if (propertyInfo.PropertyType == typeof(bool))
+					propertyValue = $".property('{propertyAttributes.PropertyName}', {rawPropertyValue.ToString().ToLower(CultureInfo.InvariantCulture)})";
+				else if (propertyInfo.PropertyType == typeof(string))
+					propertyValue = $".property('{propertyAttributes.PropertyName}', '{rawPropertyValue}')";
+				else
+					if (TryParseNumber(rawPropertyValue, out string stringValue))
+					propertyValue = $".property('{propertyAttributes.PropertyName}', {stringValue})";
+				else
+					propertyValue = $".property('{propertyAttributes.PropertyName}', '{rawPropertyValue}')";
+			}
+
 
 			return propertyValue;
 

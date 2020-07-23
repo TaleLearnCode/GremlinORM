@@ -19,7 +19,7 @@ namespace GremlinORMSample.Model
 		/// A <c>string</c> representing the event identifier.
 		/// </value>
 		[GraphProperty("eventId", Description = "Identifier of the event the vertex is associated with. Serves as the partition key.")]
-		public int EventId { get; set; }
+		public string EventId { get; set; }
 
 		/// <summary>
 		/// Gets or sets the name of the vertex object.

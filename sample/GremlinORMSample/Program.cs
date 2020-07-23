@@ -73,7 +73,7 @@ namespace GremlinORMSample
 		{
 
 			MyContext myContext = new MyContext();
-			Tag newTag = new Tag() { EventId = 11, Name = "TaleLearnCode" };
+			Tag newTag = new Tag() { EventId = "11", Name = "TaleLearnCode" };
 			myContext.Tags.Add(newTag);
 			await myContext.SaveChangesAsync();
 
